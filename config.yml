@@ -1,0 +1,6 @@
+---
+service_url: https://127.0.0.1:8443/
+service_url_ca_file: ../goahead/ssl/goahead.pem
+requesting_fqdn: foobar-server-aa02.domain.tld
+restart_condition_script: ./example/check_restart_condition.sh
+os_restart_hooks_dir: ./example/restart_hooks.d

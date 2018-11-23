@@ -1,0 +1,9 @@
+{
+  "timestamp": "2018-10-17T13:47:00.790621958+02:00",
+  "go_ahead": false,
+  "unknown_host": false,
+  "request_id": "tRzQPLKb",
+  "found_cluster": "foobar-server",
+  "requesting_fqdn": "foobar-server-aa01.domain.tld",
+  "message": "Configured minimum uptime for cluster: 30m0s was not reached by client's uptime: 2s"
+}

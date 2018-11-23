@@ -1,0 +1,1 @@
+{"timestamp":"2018-10-16T14:25:50.259535187Z","go_ahead":false,"unknown_host":false,"ask_again_in":"2s","request_id":"xiESNnBi","found_cluster":"foobar-server","requesting_fqdn":"foobar-server-aa07.domain.tld","message":"YesInquireToRestart Here is a test reason that this server should restart"}

@@ -1,0 +1,10 @@
+{
+  "timestamp": "2018-10-17T12:29:47.435460276+02:00",
+  "go_ahead": false,
+  "unknown_host": false,
+  "ask_again_in": "1s",
+  "request_id": "sqEALyco",
+  "found_cluster": "foobar-server",
+  "requesting_fqdn": "foobar-server-aa01.domain.tld",
+  "message": "No previous request file found for fqdn: foobar-server-aa01.domain.tld"
+}
