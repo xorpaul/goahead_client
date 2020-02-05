@@ -1,5 +1,5 @@
 # goahead_client
-Client program that asks the goahead service if it the server or a service is allowed to be restarted
+Client program that asks the goahead service (https://github.com/xorpaul/goahead) if is allowed to restart
 
 ### Workflow
 
@@ -59,3 +59,39 @@ Here none of the configured `reboot_goahead_checks` did return with the configur
 
 
 If the configured `restart_condition_script` did exit with the configured `restart_condition_script_exit_code_for_reboot` then the client requests a restart via the URI `/v1/request/restart/os`
+
+
+```
+{
+   "found_cluster" : "foobar-servers",
+   "go_ahead" : false,
+   "reported_uptime" : "358h14m48s",
+   "message" : "No previous request file found for fqdn: foobar-server.domain.tld",
+   "ask_again_in" : "20s",
+   "unknown_host" : false,
+   "timestamp" : "2020-02-05T15:33:23.761812213Z",
+   "request_id" : "KrXwoDxs",
+   "requesting_fqdn" : "foobar-server.domain.tld"
+}
+```
+
+In this case the the goahead service did not reject the restart request of the client, but tells it to ask again in a few seconds. This waiting time is chosen random to prevent race conditions in cluster nodes asking to reboot at the same time.
+The client also need to send the content of the resonse filed `request_id` with this new request, so that the goahead service can verify that it is the same goahead_client process as the previous request.
+
+In case everything worked, then the client recieves the important `"go_ahead" : true` in the response:
+```
+{
+   "requesting_fqdn" : "foobar-server.domain.tld",
+   "reported_uptime" : "358h14m48s",
+   "request_id" : "uVBEdaBF",
+   "go_ahead" : true,
+   "found_cluster" : "foobar-servers",
+   "ask_again_in" : "20s",
+   "unknown_host" : false,
+   "timestamp" : "2020-02-05T15:33:43.791804819Z"
+}
+```
+
+This triggers then the scripts which are found in the configured `os_restart_hooks_dir`.
+
+In this directory you can place different scripts which should be executed after the server recieved the goahead to reboot (notification scripts, silence monitoring, graceful shutdown, etc)
