@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	H "github.com/xorpaul/gohelper"
 	h "github.com/xorpaul/gohelper"
 )
 
@@ -54,15 +53,15 @@ func inquireRestart() {
 	var response response
 	err := json.Unmarshal(body, &response)
 	if err != nil {
-		H.Warnf("Could not parse JSON response: " + string(body) + " Error: " + err.Error())
+		h.Warnf("Could not parse JSON response: " + string(body) + " Error: " + err.Error())
 	}
 	if len(response.Error) > 1 {
-		H.Fatalf("Recieved error: " + response.Error)
-		H.Infof("Received valid response from " + url)
+		h.Fatalf("Recieved error: " + response.Error)
+		h.Infof("Received valid response from " + url)
 	}
 
 	if strings.HasPrefix(response.Message, "YesInquireToRestart") {
-		H.Infof("Recieved reason from middle-ware to restart: " + response.Message)
+		h.Infof("Recieved reason from middle-ware to restart: " + response.Message)
 		doRestart()
 	}
 
@@ -74,12 +73,12 @@ func askForOSRestart(rid string) response {
 	var response response
 	err := json.Unmarshal(body, &response)
 	if err != nil {
-		H.Warnf("Could not parse JSON response: " + string(body) + " Error: " + err.Error())
+		h.Warnf("Could not parse JSON response: " + string(body) + " Error: " + err.Error())
 	}
 	if len(response.Error) > 1 {
-		H.Fatalf("Recieved error: " + response.Error)
+		h.Fatalf("Recieved error: " + response.Error)
 	}
-	H.Infof("Received valid response from " + url)
+	h.Infof("Received valid response from " + url)
 	return response
 }
 
@@ -103,27 +102,27 @@ func getPayload(rid string) *bytes.Buffer {
 
 	reqBytes, err := json.Marshal(req)
 	if err != nil {
-		H.Fatalf("Error while json.Marshal request. Error: " + err.Error())
+		h.Fatalf("Error while json.Marshal request. Error: " + err.Error())
 	}
 
-	H.Debugf("Trying to send payload: " + string(reqBytes))
+	h.Debugf("Trying to send payload: " + string(reqBytes))
 
 	return bytes.NewBuffer(reqBytes)
 }
 
 func doRequest(url string, rid string) []byte {
-	H.Debugf("sending HTTP request " + url)
+	h.Debugf("sending HTTP request " + url)
 	payload := getPayload(rid)
 	resp, err := client.Post(url, "application/json", payload)
 	if err != nil {
-		H.Fatalf("Error while issuing request to " + url + " Error: " + err.Error())
+		h.Fatalf("Error while issuing request to " + url + " Error: " + err.Error())
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		H.Fatalf("Error while reading response body: " + err.Error())
+		h.Fatalf("Error while reading response body: " + err.Error())
 	}
-	H.Debugf("Received response: " + string(body))
+	h.Debugf("Received response: " + string(body))
 
 	return body
 
@@ -149,15 +148,15 @@ func main() {
 		os.Exit(0)
 	}
 
-	H.Info = true
-	H.Debug = debug
-	H.InfoTimestamp = true
-	H.WarnExit = true
+	h.Info = true
+	h.Debug = debug
+	h.InfoTimestamp = true
+	h.WarnExit = true
 
-	H.Debugf("Using as config file: " + configFile)
+	h.Debugf("Using as config file: " + configFile)
 	config = readConfigfile(configFile)
 	client = setupHttpClient()
-	if H.FileExists(disabledFile) {
+	if h.FileExists(disabledFile) {
 		data, err := ioutil.ReadFile(disabledFile)
 		if err != nil {
 			h.Fatalf("There was an error parsing the file to disabled goahead" + disabledFile + ": " + err.Error())
@@ -185,13 +184,13 @@ func setupHttpClient() *http.Client {
 		// Read in the cert file
 		certs, err := ioutil.ReadFile(config.ServiceUrlCaFile)
 		if err != nil {
-			H.Fatalf("Failed to append " + config.ServiceUrlCaFile + " to RootCAs Error: " + err.Error())
+			h.Fatalf("Failed to append " + config.ServiceUrlCaFile + " to RootCAs Error: " + err.Error())
 		}
 
 		// Append our cert to the system pool
-		H.Debugf("Appending certificate " + config.ServiceUrlCaFile + " to trusted CAs")
+		h.Debugf("Appending certificate " + config.ServiceUrlCaFile + " to trusted CAs")
 		if ok := rootCAs.AppendCertsFromPEM(certs); !ok {
-			H.Debugf("No certs appended, using system certs only")
+			h.Debugf("No certs appended, using system certs only")
 		}
 	}
 
@@ -204,11 +203,11 @@ func setupHttpClient() *http.Client {
 }
 
 func doMain() {
-	er := H.ExecuteCommand(config.RestartConditionScript, 5, true)
+	er := h.ExecuteCommand(config.RestartConditionScript, 5, true)
 	if er.ReturnCode == config.RestartConditionScriptExitCodeForReboot {
 		doRestart()
 	} else {
-		H.Infof("Did not find local reason to restart. Asking if I should restart, because of other reasons.")
+		h.Infof("Did not find local reason to restart. Asking if I should restart, because of other reasons.")
 		inquireRestart()
 	}
 }
@@ -216,12 +215,12 @@ func doMain() {
 func doRestart() {
 	response := askForOSRestart("")
 	if len(response.FoundCluster) < 1 || len(response.AskagainIn) == 0 {
-		H.Warnf(response.Message + " Exiting...")
+		h.Warnf(response.Message + " Exiting...")
 	}
-	H.Infof("Sleeping for " + response.AskagainIn)
+	h.Infof("Sleeping for " + response.AskagainIn)
 	sleep, err := time.ParseDuration(response.AskagainIn)
 	if err != nil {
-		H.Fatalf("Error while trying to parse response.AskagainIn to Duration. Error: " + err.Error())
+		h.Fatalf("Error while trying to parse response.AskagainIn to Duration. Error: " + err.Error())
 	}
 	time.Sleep(sleep)
 	response = askForOSRestart(response.RequestID)
@@ -230,27 +229,27 @@ func doRestart() {
 		// execute hooks and check their exit code
 		executeRestartHooks()
 	} else {
-		H.Infof("Did not recieve go ahead to restart. Reason: " + response.Message)
+		h.Infof("Did not recieve go ahead to restart. Reason: " + response.Message)
 	}
 
 }
 
 func executeRestartHooks() {
 	if len(config.OsRestartHooksDir) > 0 {
-		if H.IsDir(config.OsRestartHooksDir) {
+		if h.IsDir(config.OsRestartHooksDir) {
 			globPath := filepath.Join(config.OsRestartHooksDir, "*")
-			H.Debugf("Glob'ing with path " + globPath)
+			h.Debugf("Glob'ing with path " + globPath)
 			matches, err := filepath.Glob(globPath)
 			if len(matches) == 0 {
-				H.Fatalf("Could not find any restart hook scripts matching " + globPath)
+				h.Fatalf("Could not find any restart hook scripts matching " + globPath)
 			}
-			H.Debugf("found pre restart hook script: " + strings.Join(matches, " "))
+			h.Debugf("found pre restart hook script: " + strings.Join(matches, " "))
 			if err != nil {
-				H.Fatalf("Failed to glob pre restart hook script directory with glob path " + globPath + " Error: " + err.Error())
+				h.Fatalf("Failed to glob pre restart hook script directory with glob path " + globPath + " Error: " + err.Error())
 			}
 			sort.Strings(matches)
 			for _, file := range matches {
-				_ = H.ExecuteCommand(file, 10, config.OsRestartHooksAllowFail)
+				_ = h.ExecuteCommand(file, 10, config.OsRestartHooksAllowFail)
 			}
 		}
 	}
