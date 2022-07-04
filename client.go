@@ -17,6 +17,7 @@ import (
 	"time"
 
 	H "github.com/xorpaul/gohelper"
+	h "github.com/xorpaul/gohelper"
 )
 
 var (
@@ -132,17 +133,19 @@ func main() {
 	log.SetOutput(os.Stdout)
 
 	var (
-		configFileFlag = flag.String("config", "/etc/goahead/client.yml", "which config file to use")
-		versionFlag    = flag.Bool("version", false, "show build time and version number")
+		configFileFlag   = flag.String("config", "/etc/goahead/client.yml", "which config file to use")
+		disabledFileFlag = flag.String("disabled", "/etc/goahead/disabled", "file to check if goahead run should be skipped")
+		versionFlag      = flag.Bool("version", false, "show build time and version number")
 	)
 	flag.BoolVar(&debug, "debug", false, "log debug output, defaults to false")
 	flag.Parse()
 
 	configFile := *configFileFlag
+	disabledFile := *disabledFileFlag
 	version := *versionFlag
 
 	if version {
-		fmt.Println("goahead client version 0.0.1 Build time:", buildtime, "UTC")
+		fmt.Println("goahead client version 0.0.2 Build time:", buildtime, "UTC")
 		os.Exit(0)
 	}
 
@@ -154,7 +157,20 @@ func main() {
 	H.Debugf("Using as config file: " + configFile)
 	config = readConfigfile(configFile)
 	client = setupHttpClient()
-	doMain()
+	if H.FileExists(disabledFile) {
+		data, err := ioutil.ReadFile(disabledFile)
+		if err != nil {
+			h.Fatalf("There was an error parsing the file to disabled goahead" + disabledFile + ": " + err.Error())
+		}
+		reason := "reason not specified"
+		if len(data) > 0 {
+			reason = string(data)
+			reason = strings.ReplaceAll(reason, "\n", "")
+		}
+		fmt.Printf("Notice: Skipping run of goahead client; administratively disabled (Reason: '%s')\n", reason)
+	} else {
+		doMain()
+	}
 
 }
 

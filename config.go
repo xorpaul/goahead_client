@@ -27,6 +27,9 @@ type configSettings struct {
 
 // readConfigfile creates the configSettings struct from the config file
 func readConfigfile(configFile string) configSettings {
+	if !h.FileExists(configFile) {
+		h.Fatalf("config file '" + configFile + "' not found!")
+	}
 	h.Debugf("Trying to read config file: " + configFile)
 	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
