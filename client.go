@@ -30,9 +30,10 @@ var (
 )
 
 type request struct {
-	Fqdn      string `json:"fqdn"`
-	Uptime    string `json:"uptime"`
-	RequestID string `json:"request_id,omitempty"`
+	Fqdn          string `json:"fqdn"`
+	Uptime        string `json:"uptime"`
+	RequestID     string `json:"request_id,omitempty"`
+	RestartReason string `json:"restart_reason"`
 }
 
 type response struct {
@@ -49,7 +50,7 @@ type response struct {
 
 func inquireRestart() {
 	url := config.ServiceUrl + "v1/inquire/restart/"
-	body := doRequest(url, "")
+	body := doRequest(url, "", "inquire")
 	var response response
 	err := json.Unmarshal(body, &response)
 	if err != nil {
@@ -61,15 +62,15 @@ func inquireRestart() {
 	}
 
 	if strings.HasPrefix(response.Message, "YesInquireToRestart") {
-		h.Infof("Recieved reason from middle-ware to restart: " + response.Message)
-		doRestart()
+		h.Infof("Received reason from middle-ware to restart: " + response.Message)
+		doRestart("forced by middle-ware")
 	}
 
 }
 
-func askForOSRestart(rid string) response {
+func askForOSRestart(rid string, restartReason string) response {
 	url := config.ServiceUrl + "v1/request/restart/os"
-	body := doRequest(url, rid)
+	body := doRequest(url, rid, restartReason)
 	var response response
 	err := json.Unmarshal(body, &response)
 	if err != nil {
@@ -82,11 +83,14 @@ func askForOSRestart(rid string) response {
 	return response
 }
 
-func getPayload(rid string) *bytes.Buffer {
+func getPayload(rid string, restartReason string) *bytes.Buffer {
 	var req request
 
 	if len(rid) > 0 {
 		req.RequestID = rid
+	}
+	if len(restartReason) > 0 {
+		req.RestartReason = restartReason
 	}
 	if flag.Lookup("test.v") == nil {
 		req.Fqdn = getPayloadFqdn()
@@ -110,9 +114,9 @@ func getPayload(rid string) *bytes.Buffer {
 	return bytes.NewBuffer(reqBytes)
 }
 
-func doRequest(url string, rid string) []byte {
+func doRequest(url string, rid string, restartReason string) []byte {
 	h.Debugf("sending HTTP request " + url)
-	payload := getPayload(rid)
+	payload := getPayload(rid, restartReason)
 	resp, err := client.Post(url, "application/json", payload)
 	if err != nil {
 		h.Fatalf("Error while issuing request to " + url + " Error: " + err.Error())
@@ -205,15 +209,15 @@ func setupHttpClient() *http.Client {
 func doMain() {
 	er := h.ExecuteCommand(config.RestartConditionScript, 5, true)
 	if er.ReturnCode == config.RestartConditionScriptExitCodeForReboot {
-		doRestart()
+		doRestart(er.Output)
 	} else {
 		h.Infof("Did not find local reason to restart. Asking if I should restart, because of other reasons.")
 		inquireRestart()
 	}
 }
 
-func doRestart() {
-	response := askForOSRestart("")
+func doRestart(restartReason string) {
+	response := askForOSRestart("", restartReason)
 	if len(response.FoundCluster) < 1 || len(response.AskagainIn) == 0 {
 		h.Warnf(response.Message + " Exiting...")
 	}
@@ -223,7 +227,7 @@ func doRestart() {
 		h.Fatalf("Error while trying to parse response.AskagainIn to Duration. Error: " + err.Error())
 	}
 	time.Sleep(sleep)
-	response = askForOSRestart(response.RequestID)
+	response = askForOSRestart(response.RequestID, restartReason)
 
 	if response.Goahead {
 		// execute hooks and check their exit code
