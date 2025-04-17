@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -121,8 +121,7 @@ func doRequest(url string, rid string, restartReason string) []byte {
 	if err != nil {
 		h.Fatalf("Error while issuing request to " + url + " Error: " + err.Error())
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		h.Fatalf("Error while reading response body: " + err.Error())
 	}
@@ -161,7 +160,7 @@ func main() {
 	config = readConfigfile(configFile)
 	client = setupHttpClient()
 	if h.FileExists(disabledFile) {
-		data, err := ioutil.ReadFile(disabledFile)
+		data, err := os.ReadFile(disabledFile)
 		if err != nil {
 			h.Fatalf("There was an error parsing the file to disabled goahead" + disabledFile + ": " + err.Error())
 		}
@@ -186,7 +185,7 @@ func setupHttpClient() *http.Client {
 
 	if len(config.ServiceUrlCaFile) > 0 {
 		// Read in the cert file
-		certs, err := ioutil.ReadFile(config.ServiceUrlCaFile)
+		certs, err := os.ReadFile(config.ServiceUrlCaFile)
 		if err != nil {
 			h.Fatalf("Failed to append " + config.ServiceUrlCaFile + " to RootCAs Error: " + err.Error())
 		}

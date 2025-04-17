@@ -329,3 +329,20 @@ func InBetween(i, min, max int) bool {
 		return false
 	}
 }
+
+// DetectBrowserOrCLI checks for the existance of a User-Agent request header and primitivly tries to check if the request was made from a browser or from a CLI, like wget or curl and returns either "plain" if a CLI was detected or "html" if a browser was detected
+func DetectBrowserOrCLI(request *http.Request) string {
+	mode := "plain"
+	if request.Header != nil {
+		if len(request.Header["User-Agent"]) > 0 {
+			ua := request.Header["User-Agent"][0]
+			// w.Write([]byte("User-Agent: " + ua))
+			if strings.Contains(ua, "curl") || strings.Contains(ua, "Wget") {
+				mode = "plain"
+			} else if strings.Contains(ua, "AppleWebKit") || strings.Contains(ua, "Chrome") || strings.Contains(ua, "Mozilla") {
+				mode = "html"
+			}
+		}
+	}
+	return mode
+}
