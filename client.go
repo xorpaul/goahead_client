@@ -147,7 +147,7 @@ func main() {
 	version := *versionFlag
 
 	if version {
-		fmt.Println("goahead client version 0.0.2 Build time:", buildtime, "UTC")
+		fmt.Println("goahead client version 0.0.3 Build time:", buildtime, "UTC")
 		os.Exit(0)
 	}
 
