@@ -20,13 +20,14 @@ import (
 )
 
 var (
-	debug     bool
-	verbose   bool
-	info      bool
-	quiet     bool
-	buildtime string
-	config    configSettings
-	client    *http.Client
+	debug        bool
+	verbose      bool
+	info         bool
+	quiet        bool
+	buildtime    string
+	buildversion string
+	config       configSettings
+	client       *http.Client
 )
 
 type request struct {
@@ -147,7 +148,11 @@ func main() {
 	version := *versionFlag
 
 	if version {
-		fmt.Println("goahead client version 0.0.3 Build time:", buildtime, "UTC")
+		v := buildversion
+		if v == "" {
+			v = "dev" // plain go build without -ldflags -X main.buildversion=...
+		}
+		fmt.Println("goahead client version "+v+" Build time:", buildtime, "UTC")
 		os.Exit(0)
 	}
 

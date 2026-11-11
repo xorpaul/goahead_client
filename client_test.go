@@ -70,7 +70,7 @@ func TestMain(m *testing.M) {
 	config.ServiceUrl = ts.URL + "/"
 	config.RestartConditionScript = "./tests/always-true.sh"
 	config.OsRestartHooksDir = "./tests/TestRestartHooks/"
-	_ = setupHttpClient()
+	client = setupHttpClient()
 	exitCode := m.Run()
 	os.Exit(exitCode)
 }
@@ -105,7 +105,7 @@ func TestRestartConditionScriptFalse(t *testing.T) {
 
 	for _, expectedLine := range expectedLines {
 		if !strings.Contains(string(out), expectedLine) {
-			t.Errorf("Could not find expected line '" + expectedLine + "' in output.")
+			t.Error("Could not find expected line '" + expectedLine + "' in output.")
 		}
 	}
 
@@ -145,7 +145,7 @@ func TestRestartConditionScriptTrue(t *testing.T) {
 
 	for _, expectedLine := range expectedLines {
 		if !strings.Contains(string(out), expectedLine) {
-			t.Errorf("Could not find expected line '" + expectedLine + "' in output.")
+			t.Error("Could not find expected line '" + expectedLine + "' in output.")
 		}
 	}
 
@@ -188,7 +188,7 @@ func TestRestartConditionScriptTrueFailing(t *testing.T) {
 	}
 	for _, expectedLine := range expectedLines {
 		if !strings.Contains(string(out), expectedLine) {
-			t.Errorf("Could not find expected line '" + expectedLine + "' in output.")
+			t.Error("Could not find expected line '" + expectedLine + "' in output.")
 		}
 	}
 
@@ -220,12 +220,12 @@ func TestUptimeLow(t *testing.T) {
 	}
 
 	expectedLines := []string{
-		"Debug getPayload(): Trying to send payload: {\"fqdn\":\"foobar-server-aa02.domain.tld\",\"uptime\":\"2s\"}",
+		"Debug getPayload(): Trying to send payload: {\"fqdn\":\"foobar-server-aa02.domain.tld\",\"uptime\":\"2s\"",
 		"WARN doRestart(): Configured minimum uptime for cluster: 30m0s was not reached by client's uptime: 2s Exiting...",
 	}
 	for _, expectedLine := range expectedLines {
 		if !strings.Contains(string(out), expectedLine) {
-			t.Errorf("Could not find expected line '" + expectedLine + "' in output.")
+			t.Error("Could not find expected line '" + expectedLine + "' in output.")
 		}
 	}
 
@@ -236,4 +236,41 @@ func TestUptimeLow(t *testing.T) {
 
 	//fmt.Println(string(out))
 
+}
+
+// a restart condition script that exits with a code other than 0 or 1 must be compared with restart_condition_script_exit_code_for_reboot as it is
+func TestRestartConditionScriptExitCode2(t *testing.T) {
+	preRestartHooksFile := "/var/tmp/goahead_client/restart_was_triggered"
+	H.PurgeDir(preRestartHooksFile, H.FuncName())
+
+	config.RestartConditionScript = "./tests/exit-2.sh"
+	config.RestartConditionScriptExitCodeForReboot = 2
+	config.OsRestartHooksDir = "./tests/TestRestartHooks/"
+
+	if os.Getenv("TEST_FOR_CRASH_"+H.FuncName()) == "1" {
+		H.Debug = true
+		doMain()
+		return
+	}
+
+	cmd := exec.Command(os.Args[0], "-test.run="+H.FuncName()+"$")
+	cmd.Env = append(os.Environ(), "TEST_FOR_CRASH_"+H.FuncName()+"=1")
+	out, err := cmd.CombinedOutput()
+
+	exitCode := 0
+	if msg, ok := err.(*exec.ExitError); ok {
+		exitCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
+	}
+	if 0 != exitCode {
+		t.Errorf("terminated with %v, but we expected exit status %v Output: %s", exitCode, 0, string(out))
+	}
+
+	for _, expectedLine := range []string{
+		"Debug ExecuteCommand(): Executing ./tests/exit-2.sh",
+		"Sleeping for 1s",
+	} {
+		if !strings.Contains(string(out), expectedLine) {
+			t.Error("Could not find expected line '" + expectedLine + "' in output: " + string(out))
+		}
+	}
 }

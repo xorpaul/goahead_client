@@ -95,3 +95,7 @@ In case everything worked, then the client recieves the important `"go_ahead" : 
 This triggers then the scripts which are found in the configured `os_restart_hooks_dir`.
 
 In this directory you can place different scripts which should be executed after the server recieved the goahead to reboot (notification scripts, silence monitoring, graceful shutdown, etc)
+
+### Releases
+
+Releases are built with the scripts in the `go-build-release/` git submodule (`git submodule update --init`, then see `go-build-release/README.md` for the exact command).
