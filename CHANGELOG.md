@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v0.0.4] - 2026-11-11
 
 ### Fixed
 - A `restart_condition_script` exit code other than `0` or `1` could never match `restart_condition_script_exit_code_for_reboot`, because the vendored `gohelper` turned every non-zero exit code into `1`; the restart hooks also had no timeout. Fixed in `gohelper` v0.0.2, which this version now uses
