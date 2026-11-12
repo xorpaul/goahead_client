@@ -20,7 +20,7 @@ Guidance for Claude Code when working in this repository.
 ## Conventions
 
 - Public repository on GitHub: never put internal hostnames, IPs, URLs or other internal service names into code, tests, docs, examples or commit messages
-- Command execution goes through `gohelper`'s `ExecuteCommand(command, timeout, allowFail)`. The exit code of `restart_condition_script` is compared with `restart_condition_script_exit_code_for_reboot`, so exit codes other than 0 and 1 only work with a `gohelper` that keeps the real exit code (see `CHANGELOG.md`). The restart condition script has a 5s timeout, restart hooks 10s
+- Command execution goes through `gohelper`'s `ExecuteCommand(command, timeout, allowFail)`. The exit code of `restart_condition_script` is compared with `restart_condition_script_exit_code_for_reboot`, so exit codes other than 0 and 1 only work with a `gohelper` that keeps the real exit code (see `CHANGELOG.md`). The restart condition script has a 5s timeout, restart hooks use `os_restart_hooks_timeout` (default 0 = no limit)
 - A change of `gohelper` behavior needs `go get github.com/xorpaul/gohelper@<version> && go mod vendor` here
 - Keep `CHANGELOG.md` current (`## [Unreleased]`)
 

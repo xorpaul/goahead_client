@@ -257,7 +257,7 @@ func executeRestartHooks() {
 			}
 			sort.Strings(matches)
 			for _, file := range matches {
-				_ = h.ExecuteCommand(file, 10, config.OsRestartHooksAllowFail)
+				_ = h.ExecuteCommand(file, config.OsRestartHooksTimeout, config.OsRestartHooksAllowFail)
 			}
 		}
 	}

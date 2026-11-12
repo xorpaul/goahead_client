@@ -274,3 +274,54 @@ func TestRestartConditionScriptExitCode2(t *testing.T) {
 		}
 	}
 }
+
+func runSlowHook(t *testing.T, name string, timeout int) (string, int) {
+	if os.Getenv("TEST_FOR_CRASH_"+name) == "1" {
+		H.Debug = true
+		config.RestartConditionScript = "./tests/always-true.sh"
+		config.OsRestartHooksDir = "./tests/TestRestartHooksSlow/"
+		config.OsRestartHooksTimeout = timeout
+		executeRestartHooks()
+		return "", 0
+	}
+	cmd := exec.Command(os.Args[0], "-test.run="+name+"$")
+	cmd.Env = append(os.Environ(), "TEST_FOR_CRASH_"+name+"=1")
+	out, err := cmd.CombinedOutput()
+	exitCode := 0
+	if msg, ok := err.(*exec.ExitError); ok {
+		exitCode = msg.Sys().(syscall.WaitStatus).ExitStatus()
+	}
+	return string(out), exitCode
+}
+
+func TestRestartHookNoTimeout(t *testing.T) {
+	finished := "/var/tmp/goahead_client/slow_hook_finished"
+	H.PurgeDir(finished, H.FuncName())
+	if os.Getenv("TEST_FOR_CRASH_"+H.FuncName()) == "1" {
+		runSlowHook(t, H.FuncName(), 0)
+		return
+	}
+	out, exitCode := runSlowHook(t, H.FuncName(), 0)
+	if exitCode != 0 {
+		t.Errorf("terminated with %v, but we expected 0 Output: %s", exitCode, out)
+	}
+	if !H.FileExists(finished) {
+		t.Errorf("slow hook was killed although no timeout is set. Output: %s", out)
+	}
+}
+
+func TestRestartHookTimeout(t *testing.T) {
+	finished := "/var/tmp/goahead_client/slow_hook_finished"
+	H.PurgeDir(finished, H.FuncName())
+	if os.Getenv("TEST_FOR_CRASH_"+H.FuncName()) == "1" {
+		runSlowHook(t, H.FuncName(), 1)
+		return
+	}
+	out, _ := runSlowHook(t, H.FuncName(), 1)
+	if H.FileExists(finished) {
+		t.Errorf("slow hook should have been killed by the 1s timeout. Output: %s", out)
+	}
+	if !strings.Contains(out, "signal: killed") {
+		t.Errorf("expected killed message in output: %s", out)
+	}
+}

@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.5] - 2026-11-12
+
+### Added
+- `os_restart_hooks_timeout` setting (seconds, default `0` = no limit) for the maximum runtime of each restart hook
+
+### Fixed
+- Restart hooks were killed after a hard-coded 10s since `gohelper` v0.0.2 started to enforce the timeout, which broke hooks that wait longer (e.g. a `sleep 45` before the reboot). Hooks are no longer limited by default
+
 ## [v0.0.4] - 2026-11-11
 
 ### Fixed

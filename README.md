@@ -13,7 +13,10 @@ requesting_fqdn: foobar-server.domain.tld
 restart_condition_script: /etc/goahead/needrestart
 restart_condition_script_exit_code_for_reboot: 1
 os_restart_hooks_dir: /etc/goahead/restart_hooks.d
+os_restart_hooks_timeout: 0
 ```
+
+`os_restart_hooks_timeout` is the maximum runtime of each restart hook in seconds. The default `0` means no limit, so hooks that wait for a while (e.g. for running jobs to finish before the reboot) are not killed. A hook that exceeds a non-zero timeout is killed and counts as failed.
 
 Then it gets the system's uptime and sends this information to the goahead service:
 

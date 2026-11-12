@@ -3,6 +3,7 @@ package main
 import (
 	"io/ioutil"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +24,7 @@ type configSettings struct {
 	RestartConditionScriptExitCodeForReboot int           `yaml:"restart_condition_script_exit_code_for_reboot"`
 	OsRestartHooksDir                       string        `yaml:"os_restart_hooks_dir"`
 	OsRestartHooksAllowFail                 bool          `yaml:"os_restart_hooks_allow_fail"`
+	OsRestartHooksTimeout                   int           `yaml:"os_restart_hooks_timeout"`
 }
 
 // readConfigfile creates the configSettings struct from the config file
@@ -83,6 +85,10 @@ func readConfigfile(configFile string) configSettings {
 		h.Fatalf("Missing os_restart_hooks_dir setting in config file: " + configFile)
 	} else if !h.FileExists(config.OsRestartHooksDir) {
 		h.Fatalf("Failed to find configured os_restart_hooks_dir " + config.OsRestartHooksDir)
+	}
+
+	if config.OsRestartHooksTimeout < 0 {
+		h.Fatalf("Invalid os_restart_hooks_timeout setting " + strconv.Itoa(config.OsRestartHooksTimeout) + " in config file: " + configFile + " (use 0 for no limit)")
 	}
 
 	return config
